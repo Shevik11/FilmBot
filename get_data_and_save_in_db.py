@@ -72,7 +72,7 @@ while True:
                 "Rate": movie_data["vote_average"],
             }
             db.child("movies").push(movie_entry)
-            print(f"Додано фільм: {movie_entry['Title']}")
+            print(f"Add: {movie_entry['Title']}")
             total_movies += 1
 
     page += 1
