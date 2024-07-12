@@ -1,0 +1,6 @@
+.env
+.vscode/
+bunker/db.sqlite3
+.idea/
+.idea
+
