@@ -2,23 +2,28 @@ import pyrebase
 import requests
 import time
 
-# Конфігурація Firebase
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
+
+# Firebase configuration
 config = {
-    'apiKey': "AIzaSyBeNxsdVMVXIDyrw_geVSYohwAlMyTVxXU",
-    'authDomain': "filmbot-6a5ad.firebaseapp.com",
-    'databaseURL': "https://filmbot-6a5ad-default-rtdb.firebaseio.com",
-    'projectId': "filmbot-6a5ad",
-    'storageBucket': "filmbot-6a5ad.appspot.com",
-    'messagingSenderId': "1052576779841",
-    'appId': "1:1052576779841:web:56a4e5c0df9a9d68da40c0",
-    'measurementId': "G-4FX5J8KGWQ"
+    "apiKey": env("API_KEY"),
+    "authDomain": env("AUTH_DOMAIN"),
+    "databaseURL": env("DATABASE_URL"),
+    "projectId": env("PROJECT_ID"),
+    "storageBucket": env("STORAGE_BUCKET"),
+    "messagingSenderId": env("MESSAGING_SENDER_ID"),
+    "appId": env("APP_ID"),
+    "measurementId": env("MEASUREMENT_ID"),
 }
 
 firebase = pyrebase.initialize_app(config)
 db = firebase.database()
 
 # API ключ TMDB
-tmdb_api_key = '464988569c44e84ca184b0038c4ba74c'
+tmdb_api_key = env("TMDB_API_KEY")
 
 
 def get_movie_data(movie_id):
@@ -39,41 +44,45 @@ def get_popular_movies(page=1):
         return None
 
 
-# Збираємо всі доступні фільми
+# Collect all accessible films
 page = 1
 total_movies = 0
 
 while True:
-    print(f"Обробка сторінки {page}")
+    print(f"check page {page}")
     result = get_popular_movies(page)
 
-    if not result or 'results' not in result or not result['results']:
-        print("Більше фільмів не знайдено. Завершення.")
+    if not result or "results" not in result or not result["results"]:
+        print("No more films. End.")
         break
 
-    movies = result['results']
+    movies = result["results"]
 
     for movie in movies:
-        movie_data = get_movie_data(movie['id'])
+        movie_data = get_movie_data(movie["id"])
         if movie_data:
             movie_entry = {
-                'Title': movie_data['title'],
-                'Year': movie_data['release_date'][:4] if movie_data['release_date'] else 'Невідомо',
-                'Genre': ', '.join([genre['name'] for genre in movie_data['genres']]),
-                'Rate': movie_data['vote_average']
+                "Title": movie_data["title"],
+                "Year": (
+                    movie_data["release_date"][:4]
+                    if movie_data["release_date"]
+                    else "undefined"
+                ),
+                "Genre": ", ".join([genre["name"] for genre in movie_data["genres"]]),
+                "Rate": movie_data["vote_average"],
             }
-            db.child('movies').push(movie_entry)
+            db.child("movies").push(movie_entry)
             print(f"Додано фільм: {movie_entry['Title']}")
             total_movies += 1
 
     page += 1
 
-    # Затримка, щоб не перевищити ліміт запитів до API
+    # stop time
     time.sleep(1)
 
-    # Перевірка, чи досягнуто кінця списку фільмів
-    if 'total_pages' in result and page > result['total_pages']:
-        print("Досягнуто кінця списку фільмів.")
+    # check if list end
+    if "total_pages" in result and page > result["total_pages"]:
+        print("End of list.")
         break
 
-print(f'Всього додано {total_movies} фільмів до Firebase!')
+print(f"Total number: {total_movies} films to Firebase!")

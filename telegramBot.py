@@ -1,6 +1,8 @@
 from typing import Final
+import environ
 
-TOKEN: Final = '7295919096:AAFD5s4CpEmvHTxKO5B7qyWawEq59GuAMww'
-BOT_USERNAME: Final = '@ShevikFilmBot'
+env = environ.Env()
+environ.Env.read_env()
 
-
+TOKEN: Final = env("TOKEN")
+BOT_USERNAME: Final = env("BOT_USERNAME")
