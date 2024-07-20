@@ -60,6 +60,8 @@ def handle_response(text: str) -> str:
         return "Me too"
     if "pashol nafig" in processed:
         return "sama poshla"
+    if "syka" in processed:
+        return "shut up"
     # if processed ==
     return "I dont understand you"
 
