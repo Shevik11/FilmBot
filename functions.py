@@ -1,23 +1,24 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from typing import Final
-import environ
-env = environ.Env()
-environ.Env.read_env()
+from dotenv import load_dotenv
+import os
 import pyrebase
+import random
 
+load_dotenv()
 
-TOKEN: Final = env("TOKEN")
-BOT_USERNAME: Final = env("BOT_USERNAME")
+TOKEN: Final = os.getenv("TOKEN")
+BOT_USERNAME: Final = os.getenv("BOT_USERNAME")
 
 config = {
-    "apiKey": env("API_KEY"),
-    "authDomain": env("AUTH_DOMAIN"),
-    "databaseURL": env("DATABASE_URL"),
-    "projectId": env("PROJECT_ID"),
-    "storageBucket": env("STORAGE_BUCKET"),
-    "messagingSenderId": env("MESSAGING_SENDER_ID"),
-    "appId": env("APP_ID"),
-    "measurementId": env("MEASUREMENT_ID"),
+    "apiKey": os.getenv("API_KEY"),
+    "authDomain": os.getenv("AUTH_DOMAIN"),
+    "databaseURL": os.getenv("DATABASE_URL"),
+    "projectId": os.getenv("PROJECT_ID"),
+    "storageBucket": os.getenv("STORAGE_BUCKET"),
+    "messagingSenderId": os.getenv("MESSAGING_SENDER_ID"),
+    "appId": os.getenv("APP_ID"),
+    "measurementId": os.getenv("MEASUREMENT_ID"),
 }
 
 firebase = pyrebase.initialize_app(config)
@@ -28,27 +29,6 @@ movies_info = []
 current_page = 0
 
 
-def format_movie_response(movies, start_index=0, limit=10):
-    response = ""
-    end_index = start_index + limit
-    for movie in movies[start_index:end_index]:
-        response += f"Name: {movie['Title']}\n"
-        response += f"Year: {movie['Year']}\n"
-        response += f"Genre: {movie['Genre']}\n"
-        response += f"Rate: {movie['Rate']}\n\n"
-
-    return response
-
-
-def create_pagination_buttons(current_page, total_movies, limit=10):
-    buttons = []
-    if current_page > 0:
-        buttons.append(InlineKeyboardButton("Previous", callback_data=f"page_{current_page-1}"))
-    if (current_page + 1) * limit < total_movies:
-        buttons.append(InlineKeyboardButton("Next", callback_data=f"page_{current_page+1}"))
-    return InlineKeyboardMarkup([buttons])
-
-
 def get_movie_info_by_name(movie_name):
     matching_movies = []
     for movie in all_movies.each():
@@ -56,29 +36,96 @@ def get_movie_info_by_name(movie_name):
             matching_movies.append(movie.val())
     return matching_movies
 
-def parse_movie_rate(input_str):
+def get_movie_info_by_rate(movie_rate):
+    matching_movies = []
     try:
-        if '-' in input_str:
-            start, end = map(int, input_str.split('-'))
-            return [start, end]
+        first_num, last_num = map(float, movie_rate.split('-'))
+        for movie in all_movies.each():
+            rate = float(movie.val()['Rate'])
+            if first_num <= rate <= last_num:
+                matching_movies.append(movie.val())
+        if matching_movies:
+            return random.choice(matching_movies)
         else:
-            rate = int(input_str)
-            return [rate, rate]
+            return None
     except ValueError:
-        print("Invalid input format. Please enter a valid number or range like '1-10' or '5'.")
         return None
 
-def get_movie_info_by_rate(movie_rate):
-    parsed_movie_rate = parse_movie_rate(movie_rate)
 
-    if parsed_movie_rate is None:
-        return 'no rate'
+def get_movie_info_by_year(movie_year):
+    matching_movies = []
+    movie_year = movie_year.strip()
 
-    list_of_movies = []
+    # Check if the input is a single year or a range
+    if '-' in movie_year:
+        # It's a range
+        year_range = movie_year.split('-')
+        if len(year_range) != 2:
+            print("Invalid input format for year range. Please provide a range in the format 'YYYY-YYYY'.")
+            return None
+
+        # Get the first and last year
+        first_num, last_num = year_range
+
+        # Ensure both parts are exactly 4 digits long and are valid integers
+        if not (first_num.isdigit() and len(first_num) == 4 and last_num.isdigit() and len(last_num) == 4):
+            print("Invalid year format in range. Please ensure both years are in 'YYYY' format.")
+            return None
+
+        # Convert first_num and last_num to integers
+        first_year = int(first_num)
+        last_year = int(last_num)
+    else:
+        # It's a single year
+        if not (movie_year.isdigit() and len(movie_year) == 4):
+            print("Invalid year format. Please provide a year in 'YYYY' format.")
+            return None
+
+        # Convert to integer
+        first_year = last_year = int(movie_year)
+
+    # Print for debugging
+    print(first_year)
+    print(last_year)
+
+    # Iterate over movies and find matches
     for movie in all_movies.each():
-        rate = movie.val()['Rate']
-        print(f"rate is {rate}")
-        if parsed_movie_rate[0] <= abs(rate) <= parsed_movie_rate[-1]:
-            list_of_movies.append(movie.val())
-            print(len(list_of_movies))
-    return list_of_movies
+        year_str = movie.val().get('Year', '')
+        if not year_str.isdigit():
+            print(f"Skipping invalid year: {year_str}")
+            continue
+
+        year = int(year_str)
+        if first_year <= year <= last_year:
+            matching_movies.append(movie.val())
+
+    print(f" that's {matching_movies}")
+    if matching_movies:
+        return random.choice(matching_movies)
+    else:
+        print("No matching movies found.")
+        return None
+
+
+
+
+
+
+def get_movie_info_by_genre(movie_genre):
+    matching_movies = []
+
+    # Convert user input genres to lowercase and strip whitespace
+    user_genres = [genre.strip().lower() for genre in movie_genre.split(',')]
+
+    for movie in all_movies.each():
+        # Convert movie genres to lowercase and strip whitespace
+        movie_genres = [genre.strip().lower() for genre in movie.val().get('Genre', '').split(',')]
+
+        # Check if any of the user's genres are in the movie's genres
+        if all(user_genre in movie_genres for user_genre in user_genres):
+            matching_movies.append(movie.val())
+
+    if matching_movies:
+        return random.choice(matching_movies)
+    else:
+        return None
