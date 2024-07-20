@@ -8,14 +8,16 @@ from telegram.ext import (
     ContextTypes,
 )
 import random
-from functions import (
+from database_connected import (
     BOT_USERNAME,
     TOKEN,
+)
+
+from functions import (
     get_movie_info_by_name,
     get_movie_info_by_rate,
     get_movie_info_by_year,
     get_movie_info_by_genre
-
 )
 
 # Commands
