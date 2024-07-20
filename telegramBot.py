@@ -7,16 +7,20 @@ from telegram.ext import (
     filters,
     ContextTypes,
 )
+import random
 from functions import (
     BOT_USERNAME,
     TOKEN,
     get_movie_info_by_name,
-    get_movie_info_by_rate
+    get_movie_info_by_rate,
+    get_movie_info_by_year,
+    get_movie_info_by_genre
+
 )
 
 # Commands
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Мама я сиджу зліва від тебе")
+    await update.message.reply_text("That's Bot to find some film")
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -30,14 +34,17 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(help_text)
 
 
-async def additional_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("I'm additional_command")
-
 async def find_movie_by_name_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Write name of movie please")
 
 async def find_movie_by_rate_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Write min and max rate of movie please(like 7 - 10)")
+    await update.message.reply_text("Write min and max rate of random movie (like 7 - 10)")
+
+async def find_movie_by_year_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Write year you want random film (2014-2018)")
+
+async def find_movie_by_genre_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Write genre(-s) of random movie()")
 
 # Responses
 
@@ -51,46 +58,62 @@ def handle_response(text: str) -> str:
         return "I am good"
     if "ily" in processed:
         return "Me too"
+    if "pashol nafig" in processed:
+        return "sama poshla"
     # if processed ==
     return "I dont understand you"
-
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_type: str = update.message.chat.type
     text: str = update.message.text
 
     print(f'User ({update.message.chat.id}) in {message_type}: "{text}"')
+
     if message_type == "group":
         if BOT_USERNAME in text:
             new_text: str = text.replace(BOT_USERNAME, "").strip()
             response: str = handle_response(new_text)
         else:
             return
-    movie_info_by_name = get_movie_info_by_name(text)
+
     movie_info_by_rate = get_movie_info_by_rate(text)
-    print(movie_info_by_name)
-    if isinstance(movie_info_by_name, list):
-        response = ""
+    movie_info_by_name = get_movie_info_by_name(text)
+    movie_info_by_year = get_movie_info_by_year(text)
+    movie_info_by_genre = get_movie_info_by_genre(text)
+
+    response = ""
+    if isinstance(movie_info_by_name, list) and movie_info_by_name:
         for movie in movie_info_by_name:
             response += f"Name: {movie['Title']}\n"
             response += f"Year: {movie['Year']}\n"
             response += f"Genre: {movie['Genre']}\n"
             response += f"Rate: {movie['Rate']}\n\n"
+        await update.message.reply_text(response)
 
-        print(response)
+    elif '-' in text and movie_info_by_rate:
+        response += f"Name: {movie_info_by_rate['Title']}\n"
+        response += f"Year: {movie_info_by_rate['Year']}\n"
+        response += f"Genre: {movie_info_by_rate['Genre']}\n"
+        response += f"Rate: {movie_info_by_rate['Rate']}\n\n"
+        await update.message.reply_text(response)
 
-    elif movie_info_by_rate:
-        response = f"Name: {movie_info_by_name['Title']}\n"
-        response += f"Year: {movie_info_by_name['Year']}\n"
-        response += f"Genre: {movie_info_by_name['Genre']}\n"
-        response += f"Rate: {movie_info_by_name['Rate']}"
+    elif movie_info_by_year:
+        response += f"Name: {movie_info_by_year['Title']}\n"
+        response += f"Year: {movie_info_by_year['Year']}\n"
+        response += f"Genre: {movie_info_by_year['Genre']}\n"
+        response += f"Rate: {movie_info_by_year['Rate']}\n\n"
+        await update.message.reply_text(response)
+
+    elif movie_info_by_genre:
+        response += f"Name: {movie_info_by_genre['Title']}\n"
+        response += f"Year: {movie_info_by_genre['Year']}\n"
+        response += f"Genre: {movie_info_by_genre['Genre']}\n"
+        response += f"Rate: {movie_info_by_genre['Rate']}\n\n"
+        await update.message.reply_text(response)
 
     else:
         response: str = handle_response(text)
-    print("here_3")
-    print("Bot:", response)
-    await update.message.reply_text(response)
-
+        await update.message.reply_text(response)
 
 
 
@@ -107,9 +130,10 @@ if __name__ == "__main__":
 
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("additional", additional_command))
     app.add_handler(CommandHandler("findMovieByName", find_movie_by_name_command))
     app.add_handler(CommandHandler("find_movie_by_rate", find_movie_by_rate_command))
+    app.add_handler(CommandHandler("find_movie_by_year", find_movie_by_year_command))
+    app.add_handler(CommandHandler("find_movie_by_genre", find_movie_by_genre_command))
 
     # Message
     app.add_handler(MessageHandler(filters.TEXT, handle_message))
