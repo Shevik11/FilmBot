@@ -1,30 +1,30 @@
-from typing import Final
-import environ
-
-env = environ.Env()
-environ.Env.read_env()
-
-import pyrebase
-
-
-TOKEN: Final = env("TOKEN")
-BOT_USERNAME: Final = env("BOT_USERNAME")
-
-config = {
-    "apiKey": env("API_KEY"),
-    "authDomain": env("AUTH_DOMAIN"),
-    "databaseURL": env("DATABASE_URL"),
-    "projectId": env("PROJECT_ID"),
-    "storageBucket": env("STORAGE_BUCKET"),
-    "messagingSenderId": env("MESSAGING_SENDER_ID"),
-    "appId": env("APP_ID"),
-    "measurementId": env("MEASUREMENT_ID"),
-}
-
-firebase = pyrebase.initialize_app(config)
-db = firebase.database()
-all_movies = db.child("movies").get()
-
+# from typing import Final
+# import environ
+#
+# env = environ.Env()
+# environ.Env.read_env()
+#
+# import pyrebase
+#
+#
+# TOKEN: Final = env("TOKEN")
+# BOT_USERNAME: Final = env("BOT_USERNAME")
+#
+# config = {
+#     "apiKey": env("API_KEY"),
+#     "authDomain": env("AUTH_DOMAIN"),
+#     "databaseURL": env("DATABASE_URL"),
+#     "projectId": env("PROJECT_ID"),
+#     "storageBucket": env("STORAGE_BUCKET"),
+#     "messagingSenderId": env("MESSAGING_SENDER_ID"),
+#     "appId": env("APP_ID"),
+#     "measurementId": env("MEASUREMENT_ID"),
+# }
+#
+# firebase = pyrebase.initialize_app(config)
+# db = firebase.database()
+# all_movies = db.child("movies").get()
+#
 
 # lister=0
 # for x in all_movies:
